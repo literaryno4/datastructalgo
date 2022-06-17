@@ -1,3 +1,9 @@
+//
+// C++ colored ascii
+// from https://www.codegrepper.com/code-examples/cpp/c%2B%2B+colored+ascii
+//
+#pragma once
+
 #define RESET   "\033[0m"
 #define BLACK   "\033[30m"      /* Black */
 #define RED     "\033[31m"      /* Red */

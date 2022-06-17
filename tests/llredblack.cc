@@ -1,4 +1,7 @@
-#include "../llredblack.h"
+#include "../llredblack.hpp"
+#include <functional>
+
+using namespace structalgo;
 
 int main() {
     RedBlackTree<int, int> rbt;
@@ -21,8 +24,5 @@ int main() {
     rbt.deleteNode(2);
     rbt.printTree();
 
-    std::cout << !(-1);
-    
-    
     return 0;
 }

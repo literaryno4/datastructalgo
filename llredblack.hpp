@@ -1,8 +1,19 @@
+//
+// Red Black Binary Search Tree Implementation.
+// Using left-leaning version, avoid lots of cases, less code, easy to
+// understand More info about left-leaning RedBlackTree:
+// https://sedgewick.io/talks/#ll-red-black-trees
+//
+#pragma once
+
+#include <functional>
 #include <iostream>
-#include <typeinfo>
 #include <map>
 
-#include "colors.h"
+#include "./utils/colors.hpp"
+#include "./utils/printbst.hpp"
+
+namespace structalgo {
 
 enum class Color { Red = 0, Black = 1 };
 
@@ -20,7 +31,7 @@ struct Node {
     }
 };
 
-template <typename K, typename V>
+template <typename K, typename V, typename Cmp = std::less<K>>
 class RedBlackTree {
    public:
     using Node = Node<K, V>;
@@ -32,7 +43,7 @@ class RedBlackTree {
         while (x != nullptr) {
             if (key == x->key) {
                 return x->val;
-            } else if (key < x->key) {
+            } else if (cmp(key, x->key)) {
                 x = x->left;
             } else {
                 x = x->right;
@@ -60,9 +71,21 @@ class RedBlackTree {
         root = deleteMax(root);
         root->color = Color::Black;
     }
-    void printTree() { printRBT("", root, false); }
+    void printTree() { printBST("", root, false); }
 
    private:
+    K min(Node* node) {
+        while (node->left) {
+            node = node->left;
+        }
+        return node->key;
+    }
+    K max(Node* node) {
+        while (node->right) {
+            node = node->right;
+        }
+        return node->key;
+    }
     bool isRed(Node* x) {
         if (x == nullptr) return false;
         return x->color == Color::Red;
@@ -111,13 +134,16 @@ class RedBlackTree {
         return h;
     }
 
+    //
+    // insert
+    //
     Node* insert(Node* h, K key, V val) {
         if (h == nullptr) {
             return new Node(key, val, Color::Red);
         }
         if (key == h->key)
             h->val = val;
-        else if (key < h->key) {
+        else if (cmp(key, h->key)) {
             h->left = insert(h->left, key, val);
         } else {
             h->right = insert(h->right, key, val);
@@ -177,7 +203,7 @@ class RedBlackTree {
 
     // deleteNode
     Node* deleteNode(Node* h, K key) {
-        if (key < h->key) {
+        if (cmp(key, h->key)) {
             if (!isRed(h->left) && !isRed(h->left->left)) {
             }
             h->left = deleteNode(h->left, key);
@@ -192,7 +218,7 @@ class RedBlackTree {
                 h = moveRedRight(h);
             }
             if (key == h->key) {
-                // 借尸还魂
+                // This is exactly Chinese idiom "借尸还魂"
                 h->key = min(h->right);
                 h->val = get(h->right, h->key);
                 h->right = deleteMin(h->right);
@@ -205,33 +231,7 @@ class RedBlackTree {
 
    private:
     Node* root;
+    Cmp cmp;
 };
 
-template <typename K, typename V>
-void printRBT(const std::string& prefix, Node<K, V>* node, bool isLeft) {
-    if (node != nullptr) {
-        std::cout << prefix;
-        std::cout << (isLeft ? "├──" : "└──");
-        node->print();
-        std::cout << '\n';
-        printRBT(prefix + (isLeft ? "│   " : "    "), node->left, true);
-        printRBT(prefix + (isLeft ? "│   " : "    "), node->right, false);
-    }
-}
-
-template <typename K, typename V>
-K min(Node<K, V>* node) {
-    while (node->left) {
-        node = node->left;
-    }
-    return node->key;
-}
-
-template <typename K, typename V>
-K max(Node<K, V>* node) {
-    while (node->right) {
-        node = node->right;
-    }
-    return node->key;
-}
-
+}  // namespace structalgo
