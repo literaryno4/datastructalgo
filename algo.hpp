@@ -2,13 +2,14 @@
 #include <list>
 #include <queue>
 #include <vector>
+#include <future>
 
 namespace structalgo {
 
 //
 // sort algo for array
 //
-// quicksort
+// quicksort for array
 template <typename C>
 int partition(C& c, int l, int r) {
     int i = l - 1, j = l, pivot = c[r];
@@ -29,6 +30,46 @@ void quickSort(C& c, int l, int r) {
     int mid = partition(c, l, r);
     quickSort(c, l, mid - 1);
     quickSort(c, mid + 1, r);
+}
+
+// quicksort for list
+template <typename T>
+std::list<T> sequentialQuickSort(std::list<T> input) {
+    if (input.empty()) {
+        return input;
+    }
+    std::list<T> result;
+    result.splice(result.begin(), input, input.begin());
+    const T& pivot = *result.begin();
+    auto dividePoint = std::partition(input.begin(), input.end(), [&](const T& t) { return t < pivot; });
+    std::list<T> lowerPart;
+    lowerPart.splice(lowerPart.end(), input, input.begin(), dividePoint);
+    auto newLower{sequentialQuickSort(std::move(lowerPart))};
+    auto newHigher{sequentialQuickSort(std::move(input))};
+    result.splice(result.end(), newHigher);
+    result.splice(result.begin(), newLower);
+    return result;
+}
+
+// parallel quickSort for list, code from C++ concurrency in action
+template <typename T>
+std::list<T> parallelQuickSort(std::list<T> input) {
+    if (input.empty()) {
+        return input;
+    }
+    std::list<T> result;
+    result.splice(result.begin(), input, input.begin());
+    const T& pivot = *result.begin();
+    auto dividePoint = std::partition(input.begin(), input.end(), [&](const T& t) { return t < pivot; });
+    std::list<T> lowerPart;
+    lowerPart.splice(lowerPart.end(), input, input.begin(), dividePoint);
+
+    // here I use async to lauch a new thread to sort lowerPart, store the result in std::future;
+    auto newLower{std::async(std::launch::async, parallelQuickSort<T>, std::move(lowerPart))};
+    auto newHigher{parallelQuickSort(std::move(input))};
+    result.splice(result.end(), newHigher);
+    result.splice(result.begin(), newLower.get());
+    return result;
 }
 
 // mergesort

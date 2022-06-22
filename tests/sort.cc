@@ -1,8 +1,11 @@
 #include <deque>
 #include <iostream>
 #include <vector>
+#include <chrono>
+using namespace std;
 
 #include "../algo.hpp"
+#include "../utils/genRandom.h"
 using namespace structalgo;
 
 template <typename C>
@@ -18,7 +21,7 @@ void testSortAlgo(void (*sortAlgo)(C& c, int l, int r), C& c, int l, int r) {
     sortAlgo(c, l, r);
 }
 
-int main() {
+void testArraySort() {
     std::vector<int> v1{9, 8, 1, 333, 21, 19, 88, 0};
     std::deque<int> dq1{9, 8, 1, 3, 2, 1, 8, 0};
     std::vector<double> v2{-9.9, 8.1, 1.32, 33.1, 2.1, 1.1, 8.9, 0.9, -0.93};
@@ -73,5 +76,36 @@ int main() {
     printContainer(dq1);
     printContainer(v2);
     printContainer(dq2);
+}
+
+void testListSort() {
+    // std::list<int> l1{9, 8, 1, 333, 21, 19, 88, 0};
+    // std::list<double> l2{-9.9, 8.1, 1.32, 33.1, 2.1, 1.1, 8.9, 0.9, -0.93};
+    // l1 = sequentialQuickSort(l1);
+    // l2 = sequentialQuickSort(l2);
+    // l1 = parallelQuickSort(l1);
+    // l2 = parallelQuickSort(l2);
+    //printContainer(l1);
+    //printContainer(l2);
+
+    std::vector<int> v3 = genRandom<int>(100000);
+    std::list<int> l3{v3.begin(), v3.end()};
+    std::list<int> l4{v3.begin(), v3.end()};
+    auto start1 = std::chrono::steady_clock::now();
+    l3 = sequentialQuickSort(l3);
+    auto stop1 = std::chrono::high_resolution_clock::now();
+
+    auto start2 = std::chrono::high_resolution_clock::now();
+    l4 = parallelQuickSort(l4);
+    auto stop2 = std::chrono::steady_clock::now();
+
+    auto diff1 = stop1 - start1;
+    auto diff2 = stop2 - start2;
+    std::cout << "seq time: \n" << std::chrono::duration<double, milli>(diff1).count() << '\n';
+    std::cout << "par time: \n" << std::chrono::duration<double, milli>(diff2).count() << '\n';
+}
+
+int main() {
+    testListSort();
     return 0;
 }
