@@ -88,21 +88,21 @@ void testListSort() {
     //printContainer(l1);
     //printContainer(l2);
 
-    std::vector<int> v3 = genRandom<int>(100000);
+    std::vector<int> v3 = genRandom<int>(10000);
     std::list<int> l3{v3.begin(), v3.end()};
     std::list<int> l4{v3.begin(), v3.end()};
-    auto start1 = std::chrono::steady_clock::now();
+    auto start1 = std::chrono::high_resolution_clock::now();
     l3 = sequentialQuickSort(l3);
     auto stop1 = std::chrono::high_resolution_clock::now();
 
     auto start2 = std::chrono::high_resolution_clock::now();
     l4 = parallelQuickSort(l4);
-    auto stop2 = std::chrono::steady_clock::now();
+    auto stop2 = std::chrono::high_resolution_clock::now();
 
     auto diff1 = stop1 - start1;
     auto diff2 = stop2 - start2;
-    std::cout << "seq time: \n" << std::chrono::duration<double, milli>(diff1).count() << '\n';
-    std::cout << "par time: \n" << std::chrono::duration<double, milli>(diff2).count() << '\n';
+    std::cout << "seq time: \n" << std::chrono::duration<double, milli>(diff1).count() << "ms\n";
+    std::cout << "par time: \n" << std::chrono::duration<double, milli>(diff2).count() << "ms\n";
 }
 
 int main() {

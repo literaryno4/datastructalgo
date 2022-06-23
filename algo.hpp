@@ -65,7 +65,7 @@ std::list<T> parallelQuickSort(std::list<T> input) {
     lowerPart.splice(lowerPart.end(), input, input.begin(), dividePoint);
 
     // here I use async to lauch a new thread to sort lowerPart, store the result in std::future;
-    auto newLower{std::async(std::launch::async, parallelQuickSort<T>, std::move(lowerPart))};
+    auto newLower{std::async(parallelQuickSort<T>, std::move(lowerPart))};
     auto newHigher{parallelQuickSort(std::move(input))};
     result.splice(result.end(), newHigher);
     result.splice(result.begin(), newLower.get());
