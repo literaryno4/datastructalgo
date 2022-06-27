@@ -3,6 +3,8 @@
 #include <queue>
 #include <vector>
 #include <future>
+#include "lockfree_stack.hpp"
+#include "threadsafe_stack.hpp"
 
 namespace structalgo {
 
@@ -52,24 +54,100 @@ std::list<T> sequentialQuickSort(std::list<T> input) {
 }
 
 // parallel quickSort for list, code from C++ concurrency in action
+//
+// this version has big problem of thread explosion
+//
+// template <typename T>
+// std::list<T> parallelQuickSort(std::list<T> input) {
+//     if (input.empty()) {
+//         return input;
+//     }
+//     std::list<T> result;
+//     result.splice(result.begin(), input, input.begin());
+//     const T& pivot = *result.begin();
+//     auto dividePoint = std::partition(input.begin(), input.end(), [&](const T& t) { return t < pivot; });
+//     std::list<T> lowerPart;
+//     lowerPart.splice(lowerPart.end(), input, input.begin(), dividePoint);
+// 
+//     // here I use async to lauch a new thread to sort lowerPart, store the result in std::future;
+//     auto newLower{std::async(parallelQuickSort<T>, std::move(lowerPart))};
+//     auto newHigher{parallelQuickSort(std::move(input))};
+//     result.splice(result.end(), newHigher);
+//     result.splice(result.begin(), newLower.get());
+//     return result;
+// }
+
+template <typename T>
+struct Sorter {
+    struct ChunkToSort {
+        std::list<T> data;
+        std::promise<std::list<T>> promise;
+    };
+
+    LockfreeStack<ChunkToSort> chunks;
+    std::vector<std::thread> threads;
+    const unsigned max_thread_count;
+    std::atomic<bool> endOfData;
+    Sorter() : max_thread_count(std::thread::hardware_concurrency() - 1), endOfData(false) {}
+    ~Sorter() {
+        endOfData = true;
+        for (unsigned i = 0; i < threads.size(); ++i) {
+            threads[i].join();
+        }
+    }
+
+    void trySortChunk() {
+        std::shared_ptr<ChunkToSort> chunk = std::move(chunks.pop());
+        if (chunk) {
+            sortChunk(chunk);
+        }
+    }
+
+    std::list<T> doSort(std::list<T>& chunkData) {
+        if (chunkData.empty()) {
+            return chunkData;
+        }
+        std::list<T> result;
+        result.splice(result.begin(), chunkData, chunkData.begin());
+        const T& partitionVal = *result.begin();
+        auto dividePoint = std::partition(chunkData.begin(), chunkData.end(), [&](const T& val) {
+                                              return val < partitionVal;
+                                          });
+        ChunkToSort newLowerChunk;
+        newLowerChunk.data.splice(newLowerChunk.data.end(), chunkData, chunkData.begin(), dividePoint);
+        std::future<std::list<T>> newLower = newLowerChunk.promise.get_future();
+        chunks.push(std::move(newLowerChunk));
+        if (threads.size() < max_thread_count) {
+            threads.push_back(std::thread(&Sorter<T>::sortThread, this));
+        }
+        std::list<T> newHigher(doSort(chunkData));
+        result.splice(result.end(), newHigher);
+        while (newLower.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+            trySortChunk();
+        }
+        result.splice(result.begin(), newLower.get());
+        return result;
+    }
+
+    void sortChunk(const std::shared_ptr<ChunkToSort>& chunk) {
+        chunk->promise.set_value(doSort(chunk->data));
+    }
+
+    void sortThread() {
+        while (!endOfData) {
+            trySortChunk();
+            std::this_thread::yield();
+        }
+    }
+};
+
 template <typename T>
 std::list<T> parallelQuickSort(std::list<T> input) {
     if (input.empty()) {
         return input;
     }
-    std::list<T> result;
-    result.splice(result.begin(), input, input.begin());
-    const T& pivot = *result.begin();
-    auto dividePoint = std::partition(input.begin(), input.end(), [&](const T& t) { return t < pivot; });
-    std::list<T> lowerPart;
-    lowerPart.splice(lowerPart.end(), input, input.begin(), dividePoint);
-
-    // here I use async to lauch a new thread to sort lowerPart, store the result in std::future;
-    auto newLower{std::async(parallelQuickSort<T>, std::move(lowerPart))};
-    auto newHigher{parallelQuickSort(std::move(input))};
-    result.splice(result.end(), newHigher);
-    result.splice(result.begin(), newLower.get());
-    return result;
+    Sorter<T> s;
+    return s.doSort(input);
 }
 
 // mergesort
