@@ -74,10 +74,10 @@ public:
         return popHead();
     }
 
-    std::unique_ptr<Node> tryPop(T& value) {
+    std::shared_ptr<Node> tryPop(T& value) {
         std::lock_guard<std::mutex> lk(headMutex_);
         if (head_.get() == getTail()) {
-            return std::shared_ptr<T>();
+            return std::shared_ptr<Node>();
         }
         std::unique_ptr<Node> oldHead = std::move(popHead());
         value = *(oldHead->data);
