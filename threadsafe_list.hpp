@@ -1,5 +1,5 @@
 //
-// thread-safe, exception-safe and truely concurrent forward list
+// thread-safe, exception-safe and truely concurrent forward list.
 //
 
 #include <memory>
@@ -9,10 +9,12 @@ namespace structalgo {
 
 template <typename T>
 class ThreadsafeList {
+    //
     // every node has a unique mutex, which make threads visit list
     // concurrently. note this method must keep threads visiting list
-    // sequentially. For example: list: A->B->C->D->E if thread1 is visiting
+    // sequentially. For example: list: A->B->C->D->E. if thread1 is visiting
     // node C, new threads can only visit nodes before node C
+    //
     struct Node {
         std::mutex m;
         std::shared_ptr<T> data;
@@ -41,22 +43,13 @@ class ThreadsafeList {
         head.next = std::move(newHead);
     }
 
-    // TODO: this function is not threadsafe
-    void insertAfter(const T& pos, T&& data) {
-        Node* p = findFirstIF([&](auto& val) {return val == pos; });
-        if (p) {
-            auto newHead = std::make_unique<Node>(std::move(data));
-            std::lock_guard<std::mutex> lk(p->m);
-            newHead->next = std::move(p->next);
-            p->next = std::move(newHead);
-        }
-    }
-
+    //
     // Iterate this list and do something to every node.
     // to safely iterate, we must make other thread no way to pass by current node
     // that is to say:
     // list: A->B->C->D->E
     // first lock Node B, then make sure lock C before unlock B 
+    //
     template <typename Func>
     void forEach(Func func) {
         Node* current = &head;
@@ -69,11 +62,13 @@ class ThreadsafeList {
         }
     }
 
+    //
     // find first of node which satisfy pred
     // to safely iterate, we must make other thread no way to pass by current node
     // that is to say:
     // list: A->B->C->D->E
     // first lock Node B, then make sure lock C before unlock B 
+    //
     template <typename Pred>
     Node* findFirstIF(Pred pred) {
         Node* current = &head;

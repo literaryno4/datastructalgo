@@ -1,3 +1,6 @@
+//
+// a threadsafe queue, I carefully write this and use some tricks to make this queue effecient enough。
+//
 #include <memory>
 #include <mutex>
 #include <condition_variable>
@@ -47,6 +50,7 @@ class ThreadsafeQueue {
     }
 
 public:
+    // here we new a dummy node to avoid care about head when push
     ThreadsafeQueue() : head_(new Node), tail_(head_.get()) {}
     bool empty() {
         std::lock_guard<std::mutex> lk(headMutex_);
