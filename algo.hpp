@@ -3,6 +3,7 @@
 #include <queue>
 #include <vector>
 #include <future>
+#include <algorithm>
 #include "lockfree_stack.hpp"
 #include "threadsafe_stack.hpp"
 
@@ -84,7 +85,7 @@ struct Sorter {
         std::promise<std::list<T>> promise;
     };
 
-    LockfreeStack<ChunkToSort> chunks;
+    ThreadsafeStack<ChunkToSort> chunks;
     std::vector<std::thread> threads;
     const unsigned max_thread_count;
     std::atomic<bool> endOfData;

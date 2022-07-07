@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <chrono>
+#include <cassert>
 using namespace std;
 
 #include "../algo.hpp"
@@ -88,13 +89,19 @@ void testListSort() {
     //printContainer(l1);
     //printContainer(l2);
 
-    std::vector<int> v3 = genRandom<int>(10);
-    printContainer(v3);
+    std::vector<int> v3 = genRandom<int>(10000);
     std::list<int> l3{v3.begin(), v3.end()};
     std::list<int> l4{v3.begin(), v3.end()};
+    auto start2 = std::chrono::steady_clock::now();
     l3 = sequentialQuickSort(l3);
+    auto stop1 = std::chrono::steady_clock::now();
+    auto start2 = std::chrono::steady_clock::now();
     l4 = parallelQuickSort(l4);
-    printContainer(l4);
+    auto stop2 = std::chrono::steady_clock::now();
+
+    std::cout << std::chrono::duration<double, std::milli>(stop1 - start1).count() << "ms\n";
+    std::cout << std::chrono::duration<double, std::milli>(stop2 - start2).count() << "ms\n";
+    assert(l3 == l4);
 }
 
 int main() {
