@@ -89,10 +89,10 @@ void testListSort() {
     //printContainer(l1);
     //printContainer(l2);
 
-    std::vector<int> v3 = genRandom<int>(10000);
+    std::vector<int> v3 = genRandom<int>(1000000);
     std::list<int> l3{v3.begin(), v3.end()};
     std::list<int> l4{v3.begin(), v3.end()};
-    auto start2 = std::chrono::steady_clock::now();
+    auto start1 = std::chrono::steady_clock::now();
     l3 = sequentialQuickSort(l3);
     auto stop1 = std::chrono::steady_clock::now();
     auto start2 = std::chrono::steady_clock::now();

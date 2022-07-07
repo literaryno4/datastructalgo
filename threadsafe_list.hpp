@@ -43,6 +43,21 @@ class ThreadsafeList {
         head.next = std::move(newHead);
     }
 
+    void insertAfter(Node* pos, T&& data) {
+        auto newNode = std::make_unique<Node>(std::move(data));
+        std::unique_lock<std::mutex> lk(head.m);
+        Node* current = &head;
+        while ((current = current->next.get())) {
+            std::unique_lock<std::mutex> lk_next(current->m);
+            lk.unlock();
+            if (current == pos) {
+                newNode->next = std::move(current->next);
+                current->next = std::move(newNode);
+            }
+            lk = std::move(lk_next);
+        }
+    }
+
     //
     // Iterate this list and do something to every node.
     // to safely iterate, we must make other thread no way to pass by current node

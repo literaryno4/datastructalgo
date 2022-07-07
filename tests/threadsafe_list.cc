@@ -22,6 +22,9 @@ void threadpushFront2() {
     tl.pushFront(7);
     tl.pushFront(9);
     tl.pushFront(0);
+    auto node = tl.findFirstIF([](auto val) { return val == 9; });
+                  
+    tl.insertAfter(node, 100);
 }
 
 void threadPop() {
@@ -31,8 +34,6 @@ void threadPop() {
     tl.remove(9);
     printf("removeing 0\n");
     tl.remove(0);
-    // tl.insertAfter(9, 8);
-    // tl.insertAfter(6, 2);
 }
 
 void threadPop2() {
