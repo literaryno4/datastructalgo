@@ -1,7 +1,7 @@
-#include "../lockfree_stack.hpp"
+#include "../lockfree_queue.hpp"
 #include <thread>
 
-LockfreeStack<int> ls;
+LockFreeQueue<int> ls;
 
 int main() {
     std::thread t1([&]() {
