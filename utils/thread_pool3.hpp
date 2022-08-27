@@ -11,13 +11,15 @@ namespace structalgo {
 
 template <typename Func, typename T>
 class ThreadPool3 {
+    using QueueType = std::list<std::packaged_task<Func>>;
     const int maxThread_ = 25;
     bool done_;
     int queueIdx_;
+    std::mutex mtx_;
     std::vector<std::thread> threads_;
-    std::vector<std::list<std::packaged_task<Func>>> queues_;
+    std::vector<QueueType> queues_;
 
-    std::list<std::packaged_task<Func>>& getNextQueue() {
+    QueueType& getNextQueue() {
         int idx = queueIdx_;
         ++queueIdx_;
         if (queueIdx_ == queues_.size()) {
@@ -41,6 +43,9 @@ public:
     }
 
     ~ThreadPool3() {
+        for (auto& q : queues_) {
+            while (q.size());
+        }
         done_ = true;
         for (auto& thread : threads_) {
             if (thread.joinable()) {
@@ -55,7 +60,9 @@ public:
             if (q.size()) {
                 auto& task = q.front();
                 task();
+                std::unique_lock<std::mutex> lk(mtx_);
                 q.pop_front();
+                lk.unlock();
             } else {
                 std::this_thread::yield();
             }
@@ -67,7 +74,9 @@ public:
         std::packaged_task<Func> task(std::move(f));
         std::future<resultType> res(task.get_future());
         auto& q = getNextQueue();
+        std::unique_lock<std::mutex> lk(mtx_);
         q.push_back(std::move(task));
+        lk.unlock();
         return res;
     }
 };

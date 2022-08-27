@@ -6,7 +6,6 @@
 
 struct Task {
     void operator()(std::vector<int>& v, int begin, int end) {
-        printf("changing from %d to %d\n", begin, end);
         for (int i = begin; i <= end; ++i) {
             v[i]++;
         }
@@ -15,16 +14,18 @@ struct Task {
 
 class ThreadPool2 {
     bool finished;
+    const int maxThread = 25;
     LockFreeQueue<std::packaged_task<void()>> tasks;
     std::vector<std::thread> threads_;
 public:
     ThreadPool2() : finished(false) {
         int numCore = std::thread::hardware_concurrency();
-        int numThread = std::min(numCore == 0 ? 2 : numCore, 8);
+        int numThread = std::min(numCore == 0 ? 2 : numCore, maxThread);
         for (int i = 0; i < numThread; ++i) {
             threads_.push_back(std::thread(&ThreadPool2::threadFuc, this));
         }
     }
+
     ~ThreadPool2() {
         finished = true;
         for (auto& thread : threads_) {
@@ -33,6 +34,7 @@ public:
             }
         }
     }
+
     std::vector<std::thread>& getThreads() {
         return threads_;
     }
@@ -40,9 +42,9 @@ public:
         return threads_.size();
     }
 
+    // when submit task, return a future to the productor for communication.
     template <typename Func>
     std::future<void> submitTask(Func f) {
-        printf("pusing task...\n");
         std::packaged_task<void()> task(std::move(f));
         std::future<void> res(task.get_future());
         tasks.push(std::move(task));

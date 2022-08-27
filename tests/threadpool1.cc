@@ -6,7 +6,6 @@
 
 struct Task {
     void operator()(std::vector<int>& v, int begin, int end) {
-        printf("changing from %d to %d\n", begin, end);
         for (int i = begin; i <= end; ++i) {
             v[i]++;
         }
@@ -42,7 +41,7 @@ public:
 
     template <typename Func>
     void submitTask(Func f) {
-        printf("pusing task...\n");
+        // printf("pusing task...\n");
         tasks.push(std::function<void()>(f));
     }
 
@@ -80,6 +79,11 @@ public:
             }
         }
     }
+    void wait() {
+        while (!tasks.empty()) {
+            std::this_thread::yield();
+        }
+    }
     std::vector<std::thread>& getThreads() {
         return threads_;
     }
@@ -89,7 +93,7 @@ public:
 
     template <typename Func>
     void submitTask(Func f) {
-        printf("pusing task...\n");
+        // printf("pusing task...\n");
         std::lock_guard<std::mutex> lk(mtx);
         tasks.push(std::function<void()>(f));
     }
@@ -111,7 +115,7 @@ public:
 };
 
 int main() {
-    int numOfV = 134;
+    int numOfV = 13400000;
     std::vector<int> v(numOfV);
     for (int i = 0; i < numOfV; ++i) {
         v[i] = i;
@@ -123,22 +127,25 @@ int main() {
     int numCore = std::thread::hardware_concurrency();
     int numThread = std::min(numCore == 0 ? 2 : numCore, maxThreads);
 
-    ThreadPool tp;
+    ThreadPoolLock tp;
     int numPerThread = 25;
     int i;
+    auto start = std::chrono::steady_clock::now();
     for (i = 0; i <= length - numPerThread; i += numPerThread) {
         tp.submitTask([=, &v]() {
                           Task()(v, i, i + numPerThread - 1);
                       });
-        printf("%d\n", i);
     }
     Task()(v, i, length - 1);
+    tp.wait();
 
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    for (int i = 0; i < numOfV; ++i) {
-        printf("%d ", v[i]);
-    }
-    printf("\n");
+    auto stop = std::chrono::steady_clock::now();
+    printf("thread_pool2: %fms\n", std::chrono::duration<double, std::milli>(stop - start).count());
+
+    // for (int i = 0; i < numOfV; ++i) {
+    //     printf("%d ", v[i]);
+    // }
+    // printf("\n");
 
     std::vector<int> v2(numOfV);
     for (int i = 0; i < numOfV; ++i) {
