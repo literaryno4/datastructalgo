@@ -1,7 +1,7 @@
 //
 // Red Black Binary Search Tree Implementation.
 // Using left-leaning version, avoid lots of cases, less code, easy to
-// understand More info about left-leaning RedBlackTree:
+// understand. More info about left-leaning RedBlackTree:
 // https://sedgewick.io/talks/#ll-red-black-trees
 //
 #pragma once
@@ -51,41 +51,50 @@ class RedBlackTree {
         }
         return -1;
     }
+
     void put(K key, V val) {
         root = insert(root, key, val);
         root->color = Color::Black;
     }
+
     void put(K key) {
         root = insert(root, key, key);
         root->color = Color::Black;
     }
+
     void deleteNode(K key) {
         root = deleteNode(root, key);
         root->color = Color::Black;
     }
+
     void deleteMin() {
         root = deleteMin(root);
         root->color = Color::Black;
     }
+
     void deleteMax() {
         root = deleteMax(root);
         root->color = Color::Black;
     }
+
     void printTree() { printBST("", root, false); }
 
    private:
+
     K min(Node* node) {
         while (node->left) {
             node = node->left;
         }
         return node->key;
     }
+
     K max(Node* node) {
         while (node->right) {
             node = node->right;
         }
         return node->key;
     }
+
     bool isRed(Node* x) {
         if (x == nullptr) return false;
         return x->color == Color::Red;
@@ -121,7 +130,7 @@ class RedBlackTree {
     }
 
     Node* fixUp(Node* h) {
-        // keep rbt left leaning and flip color for node two red child
+        // keep rbt left leaning and flip color for node having two red child
         if (isRed(h->right)) {
             h = rotateLeft(h);
         }
@@ -141,9 +150,9 @@ class RedBlackTree {
         if (h == nullptr) {
             return new Node(key, val, Color::Red);
         }
-        if (key == h->key)
+        if (key == h->key) {
             h->val = val;
-        else if (cmp(key, h->key)) {
+        } else if (cmp(key, h->key)) {
             h->left = insert(h->left, key, val);
         } else {
             h->right = insert(h->right, key, val);
@@ -205,6 +214,7 @@ class RedBlackTree {
     Node* deleteNode(Node* h, K key) {
         if (cmp(key, h->key)) {
             if (!isRed(h->left) && !isRed(h->left->left)) {
+                h = moveRedLeft(h);
             }
             h->left = deleteNode(h->left, key);
         } else {
